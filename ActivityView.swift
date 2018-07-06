@@ -13,12 +13,14 @@ import UIKit
  */
 class ActivityView: UIViewController {
 
+    @IBOutlet weak var navItem: UINavigationItem!
     @IBOutlet weak var tabelView: UITableView!
     var activities: [Activity] = []
     
     override func viewDidLoad() {
         super.viewDidLoad()
         activities = createArray()
+        navItem.title = "ActNowAZ"
     }
     
     // helper method to add activities
@@ -37,6 +39,7 @@ class ActivityView: UIViewController {
         tempArray.append(activity3)
         tempArray.append(activity4)
         tempArray.append(activity5)
+        tempArray = tempArray.reversed()
         
         return tempArray
     }
