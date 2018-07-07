@@ -100,18 +100,7 @@
                         </constraints>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                     </view>
-                    <navigationItem key="navigationItem" id="US0-lj-Ji2">
-                        <barButtonItem key="rightBarButtonItem" style="plain" id="Uw3-3T-N4X">
-                            <button key="customView" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" id="rcN-5l-c2Z">
-                                <rect key="frame" x="276" y="7" width="83" height="30"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                <state key="normal" title="Suh dude"/>
-                                <connections>
-                                    <action selector="būton:" destination="BYZ-38-t0r" eventType="touchUpInside" id="p6L-p6-zRz"/>
-                                </connections>
-                            </button>
-                        </barButtonItem>
-                    </navigationItem>
+                    <navigationItem key="navigationItem" id="US0-lj-Ji2"/>
                     <connections>
                         <outlet property="navItem" destination="US0-lj-Ji2" id="Nnq-gy-eep"/>
                         <outlet property="tabelView" destination="mKa-aK-ocg" id="Nm7-eo-JvC"/>

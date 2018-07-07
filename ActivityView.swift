@@ -13,18 +13,6 @@ import UserNotifications
  The opening screen of the app, containing a TableView of the activities
  */
 class ActivityView: UIViewController {
-
-    @IBAction func būton(_ sender: Any) {
-        let content = UNMutableNotificationContent()
-        content.title = "The five seconds are up!"
-        content.subtitle = "Come on, tap me!"
-        content.body = "You know you want to ;)"
-        content.badge = 1
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)
-        let request = UNNotificationRequest(identifier: "timerDone", content: content, trigger: trigger)
-        
-        UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
-    }
     
     @IBOutlet weak var navItem: UINavigationItem!
     @IBOutlet weak var tabelView: UITableView!
@@ -79,8 +67,8 @@ class ActivityView: UIViewController {
             triggerDateComponents.year = userCalendar.component(.year, from: date)
             triggerDateComponents.month = userCalendar.component(.month, from: date)
             triggerDateComponents.day = userCalendar.component(.day, from: date) - 1
-            triggerDateComponents.hour = 15
-            triggerDateComponents.minute = 13
+            triggerDateComponents.hour = 12
+            triggerDateComponents.minute = 0
             triggerDateComponents.second = 0
             print(activity.title)
             print("Notification date: \(triggerDateComponents.year!)-\(triggerDateComponents.month!)-\(triggerDateComponents.day!) at \(triggerDateComponents.hour!):\(triggerDateComponents.minute!):\(triggerDateComponents.second!)")
