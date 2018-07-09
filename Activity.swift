@@ -22,11 +22,11 @@ class Activity {
     let dateFormatter = DateFormatter()
     
     init(image: UIImage, title: String, dateString: String, description: String) {
-        self.image = image
         self.title = title
         dateFormatter.dateFormat = dateFormat
         date = dateFormatter.date(from: dateString)!
         self.description = description
+        self.image = image
     }
     
 }

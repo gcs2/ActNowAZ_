@@ -39,12 +39,26 @@ class ActivityView: UIViewController {
     func createArray() -> [Activity] {
         var tempArray: [Activity] = []
         
+        // Five default image URLs
+        let AZFlagURL = URL(string: "https://farm2.staticflickr.com/1826/41480642920_a8bfa15aca.jpg")
+        let saguaroURL = URL(string: "https://farm2.staticflickr.com/1786/41480645400_121ce20ae1.jpg")
+        let navajoFlagURL = URL(string: "https://farm2.staticflickr.com/1826/28421046857_f9e0758ece.jpg")
+        let craterURL = URL(string: "https://farm1.staticflickr.com/913/41480644350_1e0bc8f7ae.jpg")
+        let saguaroGatherersURL = URL(string: "https://farm2.staticflickr.com/1803/29421292618_49311ed199.jpg")
+        
+        let AZFlagImage = getImage(imageLoc: AZFlagURL!)
+        let saguaroImage = getImage(imageLoc: saguaroURL!)
+        let navajoFlagImage = getImage(imageLoc: navajoFlagURL!)
+        let craterImage = getImage(imageLoc: craterURL!)
+        let saguaroGatherersImage = getImage(imageLoc: saguaroGatherersURL!)
+        
+        
         // Five default activities
-        let activity1 = Activity(image: #imageLiteral(resourceName: "az_flag"), title: "First Activity", dateString: "2018-07-08", description: "The first activity")
-        let activity2 = Activity(image: #imageLiteral(resourceName: "saguaro"), title: "Second Activity", dateString: "2018-07-14", description: "The second activity")
-        let activity3 = Activity(image: #imageLiteral(resourceName: "barringer_crater"), title: "Third Activity", dateString: "2018-07-21", description: "The third activity")
-        let activity4 = Activity(image: #imageLiteral(resourceName: "navajo_flag"), title: "Fourth Activity", dateString: "2018-07-28", description: "The fourth activity")
-        let activity5 = Activity(image: #imageLiteral(resourceName: "saguaro_gatherers"), title: "Fifth Activity", dateString: "2018-08-04", description: "The fifth activity")
+        let activity1 = Activity(image: AZFlagImage, title: "First Activity", dateString: "2018-07-09", description: "The first activity")
+        let activity2 = Activity(image: saguaroImage, title: "Second Activity", dateString: "2018-07-14", description: "The second activity")
+        let activity3 = Activity(image: craterImage, title: "Third Activity", dateString: "2018-07-21", description: "The third activity")
+        let activity4 = Activity(image: navajoFlagImage, title: "Fourth Activity", dateString: "2018-07-28", description: "The fourth activity")
+        let activity5 = Activity(image: saguaroGatherersImage, title: "Fifth Activity", dateString: "2018-08-04", description: "The fifth activity")
         
         tempArray.append(activity1)
         tempArray.append(activity2)
@@ -67,9 +81,9 @@ class ActivityView: UIViewController {
             triggerDateComponents.year = userCalendar.component(.year, from: date)
             triggerDateComponents.month = userCalendar.component(.month, from: date)
             triggerDateComponents.day = userCalendar.component(.day, from: date) - 1
-            triggerDateComponents.hour = 12
-            triggerDateComponents.minute = 0
-            triggerDateComponents.second = 0
+            triggerDateComponents.hour = 15
+            triggerDateComponents.minute = 46
+            triggerDateComponents.second = 25
             print(activity.title)
             print("Notification date: \(triggerDateComponents.year!)-\(triggerDateComponents.month!)-\(triggerDateComponents.day!) at \(triggerDateComponents.hour!):\(triggerDateComponents.minute!):\(triggerDateComponents.second!)")
             let trigger = UNCalendarNotificationTrigger(dateMatching: triggerDateComponents, repeats: false)
@@ -78,6 +92,16 @@ class ActivityView: UIViewController {
         }
         
         return tempArray
+    }
+    
+    func getImage(imageLoc: URL) -> UIImage {
+        var theImage: UIImage? = nil
+        let data = try? Data(contentsOf: imageLoc)
+        
+        if let imageData = data {
+            theImage = UIImage(data: imageData)
+        }
+        return theImage!
     }
     
 }
