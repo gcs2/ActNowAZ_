@@ -22,6 +22,7 @@ class Activity {
     let dateFormatter = DateFormatter()
     
     init(image: UIImage, title: String, dateString: String, description: String) {
+        print("in init")
         self.title = title
         dateFormatter.dateFormat = dateFormat
         date = dateFormatter.date(from: dateString)!

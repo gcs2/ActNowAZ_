@@ -9,6 +9,13 @@
 import UIKit
 import UserNotifications
 
+struct RawActivity: Decodable {
+    let title: String
+    let description: String
+    let date: String
+    let imageURL: String
+}
+
 /*
  The opening screen of the app, containing a TableView of the activities
  */
@@ -27,7 +34,7 @@ class ActivityView: UIViewController {
         super.viewDidLoad()
         
         parseJSON()
-        
+        print("Count: " + String(activities.count))
         let center = UNUserNotificationCenter.current()
         let notificationOptions: UNAuthorizationOptions = [.alert, .sound, .badge]
         center.requestAuthorization(options: notificationOptions) { (granted, error) in
@@ -38,20 +45,16 @@ class ActivityView: UIViewController {
         
         UIApplication.shared.applicationIconBadgeNumber = 0
         
-        //activities = createArray()
         navItem.title = "ActNowAZ"
     }
     
     // helper method to add activities
-    func createArray() -> [Activity] {
+    func createArray() {
         print("in createArray")
-        var tempArray: [Activity] = []
+        print(self.activities.count)
+        self.activities = self.activities.reversed()
         
-        
-        tempArray = tempArray.reversed()
-        
-        
-        for activity in tempArray {
+        for activity in self.activities {
             let someContent = UNMutableNotificationContent()
             someContent.title = activity.title
             someContent.subtitle = activity.description
@@ -64,75 +67,43 @@ class ActivityView: UIViewController {
             triggerDateComponents.year = userCalendar.component(.year, from: date)
             triggerDateComponents.month = userCalendar.component(.month, from: date)
             triggerDateComponents.day = userCalendar.component(.day, from: date) - 1
-            triggerDateComponents.hour = 15
-            triggerDateComponents.minute = 46
-            triggerDateComponents.second = 25
+            triggerDateComponents.hour = 16
+            triggerDateComponents.minute = 05
+            triggerDateComponents.second = 37
             print(activity.title)
             print("Notification date: \(triggerDateComponents.year!)-\(triggerDateComponents.month!)-\(triggerDateComponents.day!) at \(triggerDateComponents.hour!):\(triggerDateComponents.minute!):\(triggerDateComponents.second!)")
             let trigger = UNCalendarNotificationTrigger(dateMatching: triggerDateComponents, repeats: false)
             let request = UNNotificationRequest(identifier: activity.title, content: someContent, trigger: trigger)
             UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
         }
-        
-        return tempArray
     }
     
-    func parseJSON() {
+    func parseJSON(){
         print("parsing")
-        let url = URL(string: "https://api.myjson.com/bins/10489u")
-        let task = URLSession.shared.dataTask(with: url!) {(data, response, error ) in
-            guard error == nil else {
-                print("returned error")
-                return
-            }
-            print("no error")
+        let url = URL(string: "https://api.myjson.com/bins/xp35q")
+        URLSession.shared.dataTask(with: url!) {(data, response, error) in
             
-            guard let content = data else {
-                print("No data")
-                return
-            }
-            print("data exists")
-            
-            
-            guard let json = (try? JSONSerialization.jsonObject(with: content, options: JSONSerialization.ReadingOptions.mutableContainers)) as? [String: Any] else {
-                print("Not containing JSON")
-                return
-            }
-            print("contains JSON")
-            
-            if let titleBoi = json["title"] as? String {
-                self.theTitle = titleBoi
+            do {
+                //Create an array of possible countries
+                let rawActivities = try JSONDecoder().decode([RawActivity].self, from: data!)
+                
+                for rawActivity in rawActivities {
+                    print(rawActivity.title + ": " + rawActivity.description + " at " + rawActivity.date + " displaying " + rawActivity.imageURL)
+                    let imgURL = URL(string: rawActivity.imageURL)
+                    let img = self.getImage(imageLoc: imgURL!)
+                    let newActivity = Activity(image: img, title: rawActivity.title, dateString: rawActivity.date, description: rawActivity.description)
+                    self.activities.append(newActivity)
+                    print(self.activities.count)
+                }
+                self.createArray()
+                DispatchQueue.main.async {
+                    self.tableView.reloadData()
+                }
+            } catch {
+                print("We got an error")
             }
             
-            if let descBoi = json["description"] as? String {
-                self.theDescription = descBoi
-            }
-            
-            if let dateStringBoi = json["date"] as? String {
-                self.theDateString = dateStringBoi
-            }
-            
-            if let imageURLStringBoi = json["imageURL"] as? String {
-                self.theImgURL = URL(string: imageURLStringBoi)
-            }
-            
-            let theImg = self.getImage(imageLoc: self.theImgURL!)
-            
-            print("about to print the data array")
-            
-            
-            
-            let newActivity = Activity(image: theImg, title: self.theTitle, dateString: self.theDateString, description: self.theDescription)
-            self.activities.append(newActivity)
-            
-            DispatchQueue.main.async {
-                self.tableView.reloadData()
-            }
-            
-        }
-        
-        task.resume()
-        
+            }.resume()
     }
     
     func getImage(imageLoc: URL) -> UIImage {
