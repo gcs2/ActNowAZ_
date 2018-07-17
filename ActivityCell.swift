@@ -21,6 +21,8 @@ class ActivityCell: UITableViewCell {
         activityTitleLabel.text = activity.title
         activityDateLabel.text = DateFormatter.localizedString(from: activity.date, dateStyle: DateFormatter.Style.medium, timeStyle: DateFormatter.Style.none)
         activityDescriptionLabel.text = activity.description
+        activityDescriptionLabel.lineBreakMode = .byWordWrapping
+        activityDescriptionLabel.numberOfLines = 4
     }
 
 }

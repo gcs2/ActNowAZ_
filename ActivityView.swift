@@ -15,11 +15,18 @@ import UserNotifications
 class ActivityView: UIViewController {
     
     @IBOutlet weak var navItem: UINavigationItem!
-    @IBOutlet weak var tabelView: UITableView!
+    @IBOutlet weak var tableView: UITableView!
+    var theTitle: String = ""
+    var theDescription: String = ""
+    var theDateString: String = ""
+    var theImgURL: URL? = nil
     var activities: [Activity] = []
+    //var activityDataArray: [[String: String]] = [[:]]
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        parseJSON()
         
         let center = UNUserNotificationCenter.current()
         let notificationOptions: UNAuthorizationOptions = [.alert, .sound, .badge]
@@ -31,40 +38,16 @@ class ActivityView: UIViewController {
         
         UIApplication.shared.applicationIconBadgeNumber = 0
         
-        activities = createArray()
+        //activities = createArray()
         navItem.title = "ActNowAZ"
     }
     
     // helper method to add activities
     func createArray() -> [Activity] {
+        print("in createArray")
         var tempArray: [Activity] = []
         
-        // Five default image URLs
-        let AZFlagURL = URL(string: "https://farm2.staticflickr.com/1826/41480642920_a8bfa15aca.jpg")
-        let saguaroURL = URL(string: "https://farm2.staticflickr.com/1786/41480645400_121ce20ae1.jpg")
-        let navajoFlagURL = URL(string: "https://farm2.staticflickr.com/1826/28421046857_f9e0758ece.jpg")
-        let craterURL = URL(string: "https://farm1.staticflickr.com/913/41480644350_1e0bc8f7ae.jpg")
-        let saguaroGatherersURL = URL(string: "https://farm2.staticflickr.com/1803/29421292618_49311ed199.jpg")
         
-        let AZFlagImage = getImage(imageLoc: AZFlagURL!)
-        let saguaroImage = getImage(imageLoc: saguaroURL!)
-        let navajoFlagImage = getImage(imageLoc: navajoFlagURL!)
-        let craterImage = getImage(imageLoc: craterURL!)
-        let saguaroGatherersImage = getImage(imageLoc: saguaroGatherersURL!)
-        
-        
-        // Five default activities
-        let activity1 = Activity(image: AZFlagImage, title: "First Activity", dateString: "2018-07-09", description: "The first activity")
-        let activity2 = Activity(image: saguaroImage, title: "Second Activity", dateString: "2018-07-14", description: "The second activity")
-        let activity3 = Activity(image: craterImage, title: "Third Activity", dateString: "2018-07-21", description: "The third activity")
-        let activity4 = Activity(image: navajoFlagImage, title: "Fourth Activity", dateString: "2018-07-28", description: "The fourth activity")
-        let activity5 = Activity(image: saguaroGatherersImage, title: "Fifth Activity", dateString: "2018-08-04", description: "The fifth activity")
-        
-        tempArray.append(activity1)
-        tempArray.append(activity2)
-        tempArray.append(activity3)
-        tempArray.append(activity4)
-        tempArray.append(activity5)
         tempArray = tempArray.reversed()
         
         
@@ -94,6 +77,64 @@ class ActivityView: UIViewController {
         return tempArray
     }
     
+    func parseJSON() {
+        print("parsing")
+        let url = URL(string: "https://api.myjson.com/bins/10489u")
+        let task = URLSession.shared.dataTask(with: url!) {(data, response, error ) in
+            guard error == nil else {
+                print("returned error")
+                return
+            }
+            print("no error")
+            
+            guard let content = data else {
+                print("No data")
+                return
+            }
+            print("data exists")
+            
+            
+            guard let json = (try? JSONSerialization.jsonObject(with: content, options: JSONSerialization.ReadingOptions.mutableContainers)) as? [String: Any] else {
+                print("Not containing JSON")
+                return
+            }
+            print("contains JSON")
+            
+            if let titleBoi = json["title"] as? String {
+                self.theTitle = titleBoi
+            }
+            
+            if let descBoi = json["description"] as? String {
+                self.theDescription = descBoi
+            }
+            
+            if let dateStringBoi = json["date"] as? String {
+                self.theDateString = dateStringBoi
+            }
+            
+            if let imageURLStringBoi = json["imageURL"] as? String {
+                self.theImgURL = URL(string: imageURLStringBoi)
+            }
+            
+            let theImg = self.getImage(imageLoc: self.theImgURL!)
+            
+            print("about to print the data array")
+            
+            
+            
+            let newActivity = Activity(image: theImg, title: self.theTitle, dateString: self.theDateString, description: self.theDescription)
+            self.activities.append(newActivity)
+            
+            DispatchQueue.main.async {
+                self.tableView.reloadData()
+            }
+            
+        }
+        
+        task.resume()
+        
+    }
+    
     func getImage(imageLoc: URL) -> UIImage {
         var theImage: UIImage? = nil
         let data = try? Data(contentsOf: imageLoc)
@@ -115,7 +156,8 @@ extension ActivityView: UITableViewDataSource, UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let activity = activities[indexPath.row]
-        let cell = tabelView.dequeueReusableCell(withIdentifier: "ActivityCell") as! ActivityCell
+        let cell = tableView.dequeueReusableCell(withIdentifier: "ActivityCell") as! ActivityCell
+        
         cell.setActivity(activity: activity)
         return cell
     }
