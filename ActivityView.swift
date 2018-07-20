@@ -28,7 +28,13 @@ class ActivityView: UIViewController {
     var theDateString: String = ""
     var theImgURL: URL? = nil
     var activities: [Activity] = []
-    //var activityDataArray: [[String: String]] = [[:]]
+    var rawActivities: [RawActivity] = []
+    
+    lazy var refresher: UIRefreshControl = {
+        let refreshControl = UIRefreshControl()
+        refreshControl.addTarget(self, action: #selector(parseJSON), for: .valueChanged)
+        return refreshControl
+    }()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -45,14 +51,22 @@ class ActivityView: UIViewController {
         
         UIApplication.shared.applicationIconBadgeNumber = 0
         
+        tableView.refreshControl = refresher
+        
         navItem.title = "ActNowAZ"
     }
     
     // helper method to add activities
-    func createArray() {
+    func createArray(_ oldSize: Int) {
         print("in createArray")
-        print(self.activities.count)
+        var i = oldSize
         self.activities = self.activities.reversed()
+        while i > 0 {
+            print("popped")
+            self.activities.popLast()
+            i = i-1
+        }
+        print(self.activities.count)
         
         for activity in self.activities {
             let someContent = UNMutableNotificationContent()
@@ -68,8 +82,8 @@ class ActivityView: UIViewController {
             triggerDateComponents.month = userCalendar.component(.month, from: date)
             triggerDateComponents.day = userCalendar.component(.day, from: date) - 1
             triggerDateComponents.hour = 16
-            triggerDateComponents.minute = 05
-            triggerDateComponents.second = 37
+            triggerDateComponents.minute = 20
+            triggerDateComponents.second = 26
             print(activity.title)
             print("Notification date: \(triggerDateComponents.year!)-\(triggerDateComponents.month!)-\(triggerDateComponents.day!) at \(triggerDateComponents.hour!):\(triggerDateComponents.minute!):\(triggerDateComponents.second!)")
             let trigger = UNCalendarNotificationTrigger(dateMatching: triggerDateComponents, repeats: false)
@@ -78,16 +92,15 @@ class ActivityView: UIViewController {
         }
     }
     
-    func parseJSON(){
+    @objc func parseJSON() {
+        let oldSize = self.activities.count
         print("parsing")
-        let url = URL(string: "https://api.myjson.com/bins/xp35q")
+        let url = URL(string: "https://raw.githubusercontent.com/gcs2/ActNowAZJSON/master/actnowaz.json")
         URLSession.shared.dataTask(with: url!) {(data, response, error) in
-            
             do {
                 //Create an array of possible countries
-                let rawActivities = try JSONDecoder().decode([RawActivity].self, from: data!)
-                
-                for rawActivity in rawActivities {
+                self.rawActivities = try JSONDecoder().decode([RawActivity].self, from: data!)
+                for rawActivity in self.rawActivities {
                     print(rawActivity.title + ": " + rawActivity.description + " at " + rawActivity.date + " displaying " + rawActivity.imageURL)
                     let imgURL = URL(string: rawActivity.imageURL)
                     let img = self.getImage(imageLoc: imgURL!)
@@ -95,9 +108,13 @@ class ActivityView: UIViewController {
                     self.activities.append(newActivity)
                     print(self.activities.count)
                 }
-                self.createArray()
-                DispatchQueue.main.async {
+                self.createArray(oldSize)
+                
+                let deadline = DispatchTime.now() + .milliseconds(0)
+                DispatchQueue.main.asyncAfter(deadline: deadline) {
+                    
                     self.tableView.reloadData()
+                    self.refresher.endRefreshing()
                 }
             } catch {
                 print("We got an error")
