@@ -16,18 +16,20 @@ class Activity {
     var title: String
     var description: String
     var date: Date
+    var report: String
     
     // to handle Date conversion from Strings
     let dateFormat = "yyyy-MM-dd"
     let dateFormatter = DateFormatter()
     
-    init(image: UIImage, title: String, dateString: String, description: String) {
+    init(image: UIImage, title: String, dateString: String, description: String, report: String) {
         print("in init")
         self.title = title
         dateFormatter.dateFormat = dateFormat
         date = dateFormatter.date(from: dateString)!
         self.description = description
         self.image = image
+        self.report = report
     }
     
 }

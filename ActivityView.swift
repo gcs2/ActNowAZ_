@@ -14,6 +14,7 @@ struct RawActivity: Decodable {
     let description: String
     let date: String
     let imageURL: String
+    let report: String
 }
 
 /*
@@ -63,7 +64,7 @@ class ActivityView: UIViewController {
         self.activities = self.activities.reversed()
         while i > 0 {
             print("popped")
-            self.activities.popLast()
+            self.activities.removeLast()
             i = i-1
         }
         print(self.activities.count)
@@ -104,7 +105,7 @@ class ActivityView: UIViewController {
                     print(rawActivity.title + ": " + rawActivity.description + " at " + rawActivity.date + " displaying " + rawActivity.imageURL)
                     let imgURL = URL(string: rawActivity.imageURL)
                     let img = self.getImage(imageLoc: imgURL!)
-                    let newActivity = Activity(image: img, title: rawActivity.title, dateString: rawActivity.date, description: rawActivity.description)
+                    let newActivity = Activity(image: img, title: rawActivity.title, dateString: rawActivity.date, description: rawActivity.description, report: rawActivity.report)
                     self.activities.append(newActivity)
                     print(self.activities.count)
                 }
@@ -131,6 +132,17 @@ class ActivityView: UIViewController {
             theImage = UIImage(data: imageData)
         }
         return theImage!
+    }
+    
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        if segue.identifier == "cellsegue" {
+            let destination = segue.destination as? ActivityInDepthView
+            let activityIndex = tableView.indexPathForSelectedRow?.row
+            destination?.activityReport = activities[activityIndex!].report
+            destination?.activityImage = activities[activityIndex!].image
+            destination?.activityDate = DateFormatter.localizedString(from: activities[activityIndex!].date, dateStyle: DateFormatter.Style.long, timeStyle: DateFormatter.Style.none)
+            destination?.activityTitle = activities[activityIndex!].title
+        }
     }
     
 }
