@@ -24,6 +24,7 @@ class ActivityView: UIViewController {
     
     @IBOutlet weak var navItem: UINavigationItem!
     @IBOutlet weak var tableView: UITableView!
+    @IBOutlet weak var facebookButton: UIButton!
     var theTitle: String = ""
     var theDescription: String = ""
     var theDateString: String = ""
@@ -39,7 +40,8 @@ class ActivityView: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+        facebookButton.imageView?.contentMode = UIViewContentMode.scaleAspectFit
+        facebookButton.imageEdgeInsets = UIEdgeInsetsMake(8, 8, 8, 8)
         parseJSON()
         print("Count: " + String(activities.count))
         let center = UNUserNotificationCenter.current()
@@ -55,6 +57,20 @@ class ActivityView: UIViewController {
         tableView.refreshControl = refresher
         
         navItem.title = "ActNowAZ"
+    }
+    
+    @IBAction func didTapFacebook(sender: AnyObject) {
+        openUrl("https://www.facebook.com/groups/229279484191710/252256071894051/")
+    }
+    
+    func openUrl(_ urlStr:String!) {
+        if let url = NSURL(string:urlStr) {
+            if(UIApplication.shared.canOpenURL(url as URL)) {
+                print("facebook is installed")
+                UIApplication.shared.open(url as URL, options: [:], completionHandler: nil)
+            }
+            
+        }
     }
     
     // helper method to add activities
@@ -80,11 +96,30 @@ class ActivityView: UIViewController {
             let date = activity.date
             var triggerDateComponents = DateComponents()
             triggerDateComponents.year = userCalendar.component(.year, from: date)
-            triggerDateComponents.month = userCalendar.component(.month, from: date)
-            triggerDateComponents.day = userCalendar.component(.day, from: date) - 1
-            triggerDateComponents.hour = 16
-            triggerDateComponents.minute = 20
-            triggerDateComponents.second = 26
+            if(userCalendar.component(.day, from: date) == 1) {
+                print("first of the month")
+                let previousMonth = userCalendar.component(.month, from: date) - 1
+                var numDays: Int
+                if(previousMonth == 2) {
+                    print("February")
+                    numDays = 28
+                } else if(previousMonth == 4 || previousMonth == 6 || previousMonth == 9 || previousMonth == 11) {
+                    print("September, April, June, and November")
+                    numDays = 30
+                } else {
+                    print("all the rest")
+                    numDays = 31
+                }
+                triggerDateComponents.month = previousMonth
+                triggerDateComponents.day = numDays
+            } else {
+                print("NOT first of the month")
+                triggerDateComponents.month = userCalendar.component(.month, from: date)
+                triggerDateComponents.day = userCalendar.component(.day, from: date) - 1
+            }
+            triggerDateComponents.hour = 12
+            triggerDateComponents.minute = 53
+            triggerDateComponents.second = 30
             print(activity.title)
             print("Notification date: \(triggerDateComponents.year!)-\(triggerDateComponents.month!)-\(triggerDateComponents.day!) at \(triggerDateComponents.hour!):\(triggerDateComponents.minute!):\(triggerDateComponents.second!)")
             let trigger = UNCalendarNotificationTrigger(dateMatching: triggerDateComponents, repeats: false)
@@ -96,7 +131,7 @@ class ActivityView: UIViewController {
     @objc func parseJSON() {
         let oldSize = self.activities.count
         print("parsing")
-        let url = URL(string: "https://raw.githubusercontent.com/gcs2/ActNowAZJSON/master/actnowaz.json")
+        let url = URL(string: "https://raw.githubusercontent.com/carensiehl/ActNowAZ_JSON/master/actnowaz.json")
         URLSession.shared.dataTask(with: url!) {(data, response, error) in
             do {
                 //Create an array of possible countries
