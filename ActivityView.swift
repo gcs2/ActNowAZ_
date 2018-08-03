@@ -41,7 +41,7 @@ class ActivityView: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         facebookButton.imageView?.contentMode = UIViewContentMode.scaleAspectFit
-        facebookButton.imageEdgeInsets = UIEdgeInsetsMake(8, 8, 8, 8)
+        facebookButton.imageEdgeInsets = UIEdgeInsetsMake(12, 12, 12, 12)
         parseJSON()
         print("Count: " + String(activities.count))
         let center = UNUserNotificationCenter.current()
@@ -60,7 +60,7 @@ class ActivityView: UIViewController {
     }
     
     @IBAction func didTapFacebook(sender: AnyObject) {
-        openUrl("https://www.facebook.com/groups/229279484191710/252256071894051/")
+        
     }
     
     func openUrl(_ urlStr:String!) {
@@ -117,9 +117,9 @@ class ActivityView: UIViewController {
                 triggerDateComponents.month = userCalendar.component(.month, from: date)
                 triggerDateComponents.day = userCalendar.component(.day, from: date) - 1
             }
-            triggerDateComponents.hour = 12
-            triggerDateComponents.minute = 53
-            triggerDateComponents.second = 30
+            triggerDateComponents.hour = 9
+            triggerDateComponents.minute = 00
+            triggerDateComponents.second = 00
             print(activity.title)
             print("Notification date: \(triggerDateComponents.year!)-\(triggerDateComponents.month!)-\(triggerDateComponents.day!) at \(triggerDateComponents.hour!):\(triggerDateComponents.minute!):\(triggerDateComponents.second!)")
             let trigger = UNCalendarNotificationTrigger(dateMatching: triggerDateComponents, repeats: false)
@@ -196,4 +196,5 @@ extension ActivityView: UITableViewDataSource, UITableViewDelegate {
         cell.setActivity(activity: activity)
         return cell
     }
+    
 }
