@@ -44,11 +44,22 @@ class ActivityView: UIViewController {
         facebookButton.imageEdgeInsets = UIEdgeInsetsMake(8, 8, 8, 8)
         parseJSON()
         print("Count: " + String(activities.count))
-        let center = UNUserNotificationCenter.current()
-        let notificationOptions: UNAuthorizationOptions = [.alert, .sound, .badge]
-        center.requestAuthorization(options: notificationOptions) { (granted, error) in
-            if !granted {
-                print("something went wrong")
+        
+        // Configure User Notification Center
+        UNUserNotificationCenter.current().delegate = self
+        
+        UNUserNotificationCenter.current().getNotificationSettings { (notificationSettings) in
+            switch notificationSettings.authorizationStatus {
+            case .notDetermined:
+                self.requestAuthorization(completionHandler: { (success) in
+                    guard success else { return }
+                    
+                    self.scheduleLocalNotification()
+                })
+            case .authorized:
+                self.scheduleLocalNotification()
+            case .denied:
+                print("Application Not Allowed to Display Notifications")
             }
         }
         
@@ -59,10 +70,42 @@ class ActivityView: UIViewController {
         navItem.title = "ActNowAZ"
     }
     
-    @IBAction func didTapFacebook(sender: AnyObject) {
-        openUrl("https://www.facebook.com/groups/229279484191710/252256071894051/")
+    private func requestAuthorization(completionHandler: @escaping (_ success: Bool) -> ()) {
+        // Request Authorization
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { (success, error) in
+            if let error = error {
+                print("Request Authorization Failed (\(error), \(error.localizedDescription))")
+            }
+            
+            completionHandler(success)
+        }
     }
     
+    private func scheduleLocalNotification() {
+        
+        // Create Notification Content
+        let notificationContent = UNMutableNotificationContent()
+        
+        // Configure Notification Content
+        notificationContent.title = "New Activity"
+        notificationContent.subtitle = ""
+        notificationContent.body = "Check it out!"
+        
+        // Add Trigger
+        let notificationTrigger = UNCalendarNotificationTrigger(dateMatching: DateComponents(hour: 9, minute: 0, weekday: 3), repeats: true)
+        print(notificationTrigger.nextTriggerDate() ?? "nil")
+        
+        // Create Notification Request
+        let notificationRequest = UNNotificationRequest(identifier: "cocoacasts_local_notification", content: notificationContent, trigger: notificationTrigger)
+        
+        // Add Request to User Notification Center
+        UNUserNotificationCenter.current().add(notificationRequest) { (error) in
+            if let error = error {
+                print("Unable to Add Notification Request (\(error), \(error.localizedDescription))")
+            }
+        }
+    }
+        
     func openUrl(_ urlStr:String!) {
         if let url = NSURL(string:urlStr) {
             if(UIApplication.shared.canOpenURL(url as URL)) {
@@ -84,54 +127,12 @@ class ActivityView: UIViewController {
             i = i-1
         }
         print(self.activities.count)
-        
-        for activity in self.activities {
-            let someContent = UNMutableNotificationContent()
-            someContent.title = activity.title
-            someContent.subtitle = activity.description
-            someContent.body = "Check it out!"
-            someContent.badge = 1
-            
-            let userCalendar = Calendar.current
-            let date = activity.date
-            var triggerDateComponents = DateComponents()
-            triggerDateComponents.year = userCalendar.component(.year, from: date)
-            if(userCalendar.component(.day, from: date) == 1) {
-                print("first of the month")
-                let previousMonth = userCalendar.component(.month, from: date) - 1
-                var numDays: Int
-                if(previousMonth == 2) {
-                    print("February")
-                    numDays = 28
-                } else if(previousMonth == 4 || previousMonth == 6 || previousMonth == 9 || previousMonth == 11) {
-                    print("September, April, June, and November")
-                    numDays = 30
-                } else {
-                    print("all the rest")
-                    numDays = 31
-                }
-                triggerDateComponents.month = previousMonth
-                triggerDateComponents.day = numDays
-            } else {
-                print("NOT first of the month")
-                triggerDateComponents.month = userCalendar.component(.month, from: date)
-                triggerDateComponents.day = userCalendar.component(.day, from: date) - 1
-            }
-            triggerDateComponents.hour = 12
-            triggerDateComponents.minute = 53
-            triggerDateComponents.second = 30
-            print(activity.title)
-            print("Notification date: \(triggerDateComponents.year!)-\(triggerDateComponents.month!)-\(triggerDateComponents.day!) at \(triggerDateComponents.hour!):\(triggerDateComponents.minute!):\(triggerDateComponents.second!)")
-            let trigger = UNCalendarNotificationTrigger(dateMatching: triggerDateComponents, repeats: false)
-            let request = UNNotificationRequest(identifier: activity.title, content: someContent, trigger: trigger)
-            UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
-        }
     }
     
     @objc func parseJSON() {
         let oldSize = self.activities.count
         print("parsing")
-        let url = URL(string: "https://raw.githubusercontent.com/carensiehl/ActNowAZ_JSON/master/actnowaz.json")
+        let url = URL(string: "https://api.myjson.com/bins/e2xbw")
         URLSession.shared.dataTask(with: url!) {(data, response, error) in
             do {
                 //Create an array of possible countries
@@ -196,4 +197,12 @@ extension ActivityView: UITableViewDataSource, UITableViewDelegate {
         cell.setActivity(activity: activity)
         return cell
     }
+}
+
+extension ActivityView: UNUserNotificationCenterDelegate {
+    
+    func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        completionHandler([.alert])
+    }
+    
 }
