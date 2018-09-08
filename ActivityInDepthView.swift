@@ -24,6 +24,7 @@ class ActivityInDepthView: UIViewController {
     @IBOutlet weak var activityTitleLabel: UILabel!
     @IBOutlet weak var activityLinkButton: UIButton!
     @IBOutlet weak var activityPhoneButton: UIButton!
+    @IBOutlet weak var activityLinkBackground: UIView!
     
     @IBAction func activityLinkTapped(_ sender: Any) {
         if let url = NSURL(string:activityLink) {
@@ -53,6 +54,7 @@ class ActivityInDepthView: UIViewController {
 
         if(activityLink == "") {
             activityLinkButton.isHidden = true
+            activityLinkBackground.isHidden = true
         }
         if(activityPhone == "") {
             activityPhoneButton.isHidden = true
