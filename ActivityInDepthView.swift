@@ -9,16 +9,37 @@
 import UIKit
 
 class ActivityInDepthView: UIViewController {
-    @IBOutlet var thisView: UIView!
-    @IBOutlet weak var specifiedActivityImageView: UIImageView!
-    @IBOutlet weak var activityReportLabel: UILabel!
-    @IBOutlet weak var activityDateLabel: UILabel!
-    @IBOutlet weak var activityTitleLabel: UILabel!
     
     var activityReport = String()
     var activityDate = String()
     var activityImage = UIImage()
     var activityTitle = String()
+    var activityLink = String()
+    var activityPhone = String()
+    
+    @IBOutlet var thisView: UIView!
+    @IBOutlet weak var specifiedActivityImageView: UIImageView!
+    @IBOutlet weak var activityReportLabel: UILabel!
+    @IBOutlet weak var activityDateLabel: UILabel!
+    @IBOutlet weak var activityTitleLabel: UILabel!
+    @IBOutlet weak var activityLinkButton: UIButton!
+    @IBOutlet weak var activityPhoneButton: UIButton!
+    
+    @IBAction func activityLinkTapped(_ sender: Any) {
+        if let url = NSURL(string:activityLink) {
+            if(UIApplication.shared.canOpenURL(url as URL)) {
+                UIApplication.shared.open(url as URL, options: [:], completionHandler: nil)
+            }
+        }
+    }
+    
+    @IBAction func activityPhoneTapped(_ sender: Any) {
+        if let url = NSURL(string:"tel://\(activityPhone)") {
+            if(UIApplication.shared.canOpenURL(url as URL)) {
+                UIApplication.shared.open(url as URL, options: [:], completionHandler: nil)
+            }
+        }
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -28,6 +49,14 @@ class ActivityInDepthView: UIViewController {
         specifiedActivityImageView.image = activityImage
         activityDateLabel.text = activityDate
         activityTitleLabel.text = activityTitle
+        activityLinkButton.setTitle(activityLink, for: .normal)
+
+        if(activityLink == "") {
+            activityLinkButton.isHidden = true
+        }
+        if(activityPhone == "") {
+            activityPhoneButton.isHidden = true
+        }
     }
 
     override func didReceiveMemoryWarning() {

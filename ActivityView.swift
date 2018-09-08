@@ -15,6 +15,8 @@ struct RawActivity: Decodable {
     let date: String
     let imageURL: String
     let report: String
+    let link: String
+    let phone: String
 }
 
 /*
@@ -44,11 +46,22 @@ class ActivityView: UIViewController {
         facebookButton.imageEdgeInsets = UIEdgeInsetsMake(12, 12, 12, 12)
         parseJSON()
         print("Count: " + String(activities.count))
-        let center = UNUserNotificationCenter.current()
-        let notificationOptions: UNAuthorizationOptions = [.alert, .sound, .badge]
-        center.requestAuthorization(options: notificationOptions) { (granted, error) in
-            if !granted {
-                print("something went wrong")
+        
+        // Configure User Notification Center
+        UNUserNotificationCenter.current().delegate = self
+        
+        UNUserNotificationCenter.current().getNotificationSettings { (notificationSettings) in
+            switch notificationSettings.authorizationStatus {
+            case .notDetermined:
+                self.requestAuthorization(completionHandler: { (success) in
+                    guard success else { return }
+                    
+                    self.scheduleLocalNotification()
+                })
+            case .authorized:
+                self.scheduleLocalNotification()
+            case .denied:
+                print("Application Not Allowed to Display Notifications")
             }
         }
         
@@ -57,6 +70,42 @@ class ActivityView: UIViewController {
         tableView.refreshControl = refresher
         
         navItem.title = "ActNowAZ"
+    }
+    
+    private func requestAuthorization(completionHandler: @escaping (_ success: Bool) -> ()) {
+        // Request Authorization
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { (success, error) in
+            if let error = error {
+                print("Request Authorization Failed (\(error), \(error.localizedDescription))")
+            }
+            
+            completionHandler(success)
+        }
+    }
+    
+    private func scheduleLocalNotification() {
+        
+        // Create Notification Content
+        let notificationContent = UNMutableNotificationContent()
+        
+        // Configure Notification Content
+        notificationContent.title = "Get involved!"
+        notificationContent.subtitle = "Weekly activism:"
+        notificationContent.body = "Check out this week's activity!"
+        
+        // Add Trigger
+        let notificationTrigger = UNCalendarNotificationTrigger(dateMatching: DateComponents(hour: 9, minute: 0, weekday: 3), repeats: true)
+        print(notificationTrigger.nextTriggerDate() ?? "nil")
+        
+        // Create Notification Request
+        let notificationRequest = UNNotificationRequest(identifier: "cocoacasts_local_notification", content: notificationContent, trigger: notificationTrigger)
+        
+        // Add Request to User Notification Center
+        UNUserNotificationCenter.current().add(notificationRequest) { (error) in
+            if let error = error {
+                print("Unable to Add Notification Request (\(error), \(error.localizedDescription))")
+            }
+        }
     }
     
     @IBAction func didTapFacebook(sender: AnyObject) {
@@ -79,53 +128,10 @@ class ActivityView: UIViewController {
         var i = oldSize
         self.activities = self.activities.reversed()
         while i > 0 {
-            print("popped")
             self.activities.removeLast()
             i = i-1
         }
         print(self.activities.count)
-        
-        for activity in self.activities {
-            let someContent = UNMutableNotificationContent()
-            someContent.title = activity.title
-            someContent.subtitle = activity.description
-            someContent.body = "Check it out!"
-            someContent.badge = 1
-            
-            let userCalendar = Calendar.current
-            let date = activity.date
-            var triggerDateComponents = DateComponents()
-            triggerDateComponents.year = userCalendar.component(.year, from: date)
-            if(userCalendar.component(.day, from: date) == 1) {
-                print("first of the month")
-                let previousMonth = userCalendar.component(.month, from: date) - 1
-                var numDays: Int
-                if(previousMonth == 2) {
-                    print("February")
-                    numDays = 28
-                } else if(previousMonth == 4 || previousMonth == 6 || previousMonth == 9 || previousMonth == 11) {
-                    print("September, April, June, and November")
-                    numDays = 30
-                } else {
-                    print("all the rest")
-                    numDays = 31
-                }
-                triggerDateComponents.month = previousMonth
-                triggerDateComponents.day = numDays
-            } else {
-                print("NOT first of the month")
-                triggerDateComponents.month = userCalendar.component(.month, from: date)
-                triggerDateComponents.day = userCalendar.component(.day, from: date) - 1
-            }
-            triggerDateComponents.hour = 9
-            triggerDateComponents.minute = 00
-            triggerDateComponents.second = 00
-            print(activity.title)
-            print("Notification date: \(triggerDateComponents.year!)-\(triggerDateComponents.month!)-\(triggerDateComponents.day!) at \(triggerDateComponents.hour!):\(triggerDateComponents.minute!):\(triggerDateComponents.second!)")
-            let trigger = UNCalendarNotificationTrigger(dateMatching: triggerDateComponents, repeats: false)
-            let request = UNNotificationRequest(identifier: activity.title, content: someContent, trigger: trigger)
-            UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
-        }
     }
     
     @objc func parseJSON() {
@@ -140,7 +146,7 @@ class ActivityView: UIViewController {
                     print(rawActivity.title + ": " + rawActivity.description + " at " + rawActivity.date + " displaying " + rawActivity.imageURL)
                     let imgURL = URL(string: rawActivity.imageURL)
                     let img = self.getImage(imageLoc: imgURL!)
-                    let newActivity = Activity(image: img, title: rawActivity.title, dateString: rawActivity.date, description: rawActivity.description, report: rawActivity.report)
+                    let newActivity = Activity(image: img, title: rawActivity.title, dateString: rawActivity.date, description: rawActivity.description, report: rawActivity.report, link: rawActivity.link, phone: rawActivity.phone)
                     self.activities.append(newActivity)
                     print(self.activities.count)
                 }
@@ -177,6 +183,8 @@ class ActivityView: UIViewController {
             destination?.activityImage = activities[activityIndex!].image
             destination?.activityDate = DateFormatter.localizedString(from: activities[activityIndex!].date, dateStyle: DateFormatter.Style.long, timeStyle: DateFormatter.Style.none)
             destination?.activityTitle = activities[activityIndex!].title
+            destination?.activityLink = activities[activityIndex!].link
+            destination?.activityPhone = activities[activityIndex!].phone
         }
     }
     
@@ -195,6 +203,13 @@ extension ActivityView: UITableViewDataSource, UITableViewDelegate {
         
         cell.setActivity(activity: activity)
         return cell
+    }
+}
+
+extension ActivityView: UNUserNotificationCenterDelegate {
+    
+    func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        completionHandler([.alert])
     }
     
 }
